@@ -1,15 +1,16 @@
 package com.plugin.inspection;
 
-import com.intellij.codeInspection.*;
 import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.codeInsight.daemon.impl.quickfix.SurroundWithTryCatchFix;
+import com.intellij.codeInspection.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.kotlin.psi.KtVisitor;
 
 public class JavaCallingKotlinExceptionInspection extends AbstractBaseUastLocalInspectionTool {
 	
@@ -17,7 +18,7 @@ public class JavaCallingKotlinExceptionInspection extends AbstractBaseUastLocalI
 	
 	private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.JavaCallingKotlinExceptionInspection");
 	
-	private final CriQuickFix myQuickFix = new CriQuickFix();
+	private final LocalQuickFix myQuickFix = new CriQuickFix();
 	
 	@Nls
 	@NotNull
@@ -41,7 +42,6 @@ public class JavaCallingKotlinExceptionInspection extends AbstractBaseUastLocalI
 	@NotNull
 	@Override
 	public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-		
 		return new JavaElementVisitor() {
 			
 			@Override
@@ -64,32 +64,6 @@ public class JavaCallingKotlinExceptionInspection extends AbstractBaseUastLocalI
 					}
 				}
 			}
-			
-			//@Override
-			//public void visitBinaryExpression(PsiBinaryExpression expression) {
-			//	super.visitBinaryExpression(expression);
-			//	LOG.info("visitBinaryExpression, " + expression.getText());
-			//	IElementType opSign = expression.getOperationTokenType();
-			//	if (opSign == JavaTokenType.EQEQ || opSign == JavaTokenType.NE) {
-			//		// The binary expression is the correct type for this inspection
-			//		PsiExpression lOperand = expression.getLOperand();
-			//		PsiExpression rOperand = expression.getROperand();
-			//		if (rOperand == null || isNullLiteral(lOperand) || isNullLiteral(rOperand)) {
-			//			return;
-			//		}
-			//		// Nothing is compared to null, now check the types being compared
-			//		PsiType lType = lOperand.getType();
-			//		PsiType rType = rOperand.getType();
-			//		if (isCheckedType(lType) || isCheckedType(rType)) {
-			//			// Identified an expression with potential problems, add to list with fix object.
-			//			holder.registerProblem(
-			//				expression,
-			//				"Short message definin that smthng wrong here",
-			//				myQuickFix
-			//			);
-			//		}
-			//	}
-			//}
 		};
 	}
 	
@@ -122,49 +96,9 @@ public class JavaCallingKotlinExceptionInspection extends AbstractBaseUastLocalI
 		@Override
 		public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
 			try {
-				
-				PsiElement codeBlockToBeFixed = descriptor.getPsiElement();
-				
-				String tryBlock = "try { ";
-				String codeBlockToBeSurrounded = codeBlockToBeFixed.getText();
-				String tryBlockEnd = " } ";
-				String catchBlock = "catch(Exception e) { ";
-				String catchBlockEnd = " }";
-				
-				PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
-				
-				//codeBlockToBeFixed.addBefore()
-				
-				PsiExpression surroundedCodeBlock = elementFactory.createExpressionFromText(
-					tryBlock + codeBlockToBeSurrounded + tryBlockEnd + catchBlock + catchBlockEnd,
-					null
-				);
-				
-				surroundedCodeBlock.replace(codeBlockToBeFixed);
-				
-				
-				//PsiBinaryExpression binaryExpression = (PsiBinaryExpression) descriptor.getPsiElement();
-				//IElementType opSign = binaryExpression.getOperationTokenType();
-				//PsiExpression lExpr = binaryExpression.getLOperand();
-				//PsiExpression rExpr = binaryExpression.getROperand();
-				//if (rExpr == null) {
-				//	return;
-				//}
-				//
-				//PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
-				//PsiMethodCallExpression equalsCall =
-				//	(PsiMethodCallExpression) factory.createExpressionFromText("a.equals(b)", null);
-				//
-				//equalsCall.getMethodExpression().getQualifierExpression().replace(lExpr);
-				//equalsCall.getArgumentList().getExpressions()[0].replace(rExpr);
-				//
-				//PsiExpression result = (PsiExpression) binaryExpression.replace(equalsCall);
-				//
-				//if (opSign == JavaTokenType.NE) {
-				//	PsiPrefixExpression negation = (PsiPrefixExpression) factory.createExpressionFromText("!a", null);
-				//	negation.getOperand().replace(result);
-				//	result.replace(negation);
-				//}
+				PsiElement element = descriptor.getPsiElement();
+				Editor editor = PsiUtilBase.findEditor(element);
+				new SurroundWithTryCatchFix(element).invoke(project, editor, null);
 			} catch (IncorrectOperationException e) {
 				LOG.error(e);
 			}
@@ -175,4 +109,5 @@ public class JavaCallingKotlinExceptionInspection extends AbstractBaseUastLocalI
 			return getName();
 		}
 	}
+
 }
