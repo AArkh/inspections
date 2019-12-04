@@ -40,15 +40,15 @@ class KotlinDangerousMethodInspection : AbstractBaseUastLocalInspectionTool() {
                 }
 
                 var parent = node.sourcePsi
-                //while (true) {
-                //    if (parent?.text?.contains(" try ") == true) {
-                //        return false
-                //    }
-                //    if (parent == null || parent.text.contains(" fun ")) {
-                //        break
-                //    }
-                //    parent = parent.parent
-                //}
+                while (true) {
+                    if (parent?.node?.elementType?.toString() == "TRY") {
+                        return false
+                    }
+                    if (parent == null) {
+                        break
+                    }
+                    parent = parent.parent
+                }
 
                 holder.registerProblem(
                     node.sourcePsi!!,
