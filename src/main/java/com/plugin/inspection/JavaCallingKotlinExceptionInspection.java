@@ -9,12 +9,13 @@ import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.kotlin.psi.KtVisitor;
 
-public class KotlinExceptionInspection extends AbstractBaseUastLocalInspectionTool {
+public class JavaCallingKotlinExceptionInspection extends AbstractBaseUastLocalInspectionTool {
 	
 	public static final String QUICK_FIX_NAME = "SDK: " + InspectionsBundle.message("inspection.comparing.references.use.quickfix");
 	
-	private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.KotlinExceptionInspection");
+	private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.JavaCallingKotlinExceptionInspection");
 	
 	private final CriQuickFix myQuickFix = new CriQuickFix();
 	
@@ -22,7 +23,7 @@ public class KotlinExceptionInspection extends AbstractBaseUastLocalInspectionTo
 	@NotNull
 	@Override
 	public String getDisplayName() {
-		return "Kotlin calls inspection";
+		return "Java calling Kotlin inspection";
 	}
 	
 	@Nls

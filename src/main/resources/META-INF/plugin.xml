@@ -16,19 +16,28 @@
     <depends>com.intellij.modules.java</depends>
 
     <extensions defaultExtensionNs="com.intellij">
-        <!--inspectionToolProvider implementation="com.plugin.inspection.CustomInspectionProvider"/-->
-
         <localInspection
                 language="JAVA"
-                displayName="SDK: '==' or '!=' used instead of 'equals()'"
+                displayName="Java calling Kotlin method annotated with @Throws"
                 groupPath="Java"
                 groupBundle="messages.InspectionsBundle"
                 groupKey="group.names.probable.bugs"
                 enabledByDefault="true"
                 level="WARNING"
-                implementationClass="com.plugin.inspection.KotlinExceptionInspection"
+                implementationClass="com.plugin.inspection.JavaCallingKotlinExceptionInspection"
         />
     </extensions>
+
+
+    <!--extensions defaultExtensionNs="com.intellij">
+        <localInspection
+                displayName="SDK: '==' or '!=' used instead of 'equals()'"
+                groupPath="Kotlin"
+                enabledByDefault="true"
+                level="WARNING"
+                implementationClass="com.plugin.inspection.KotlinNotAnnotatedInspection"
+        />
+    </extensions-->
 
     <!-- Compatible with the following versions of IntelliJ Platform -->
     <idea-version since-build="150"/>
