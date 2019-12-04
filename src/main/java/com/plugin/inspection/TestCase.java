@@ -12,5 +12,9 @@ public class TestCase {
 		return false;
 	}
 	
+	void tsest() {
+		new FILECLass("").soFun();
+	}
+	
 	
 }
