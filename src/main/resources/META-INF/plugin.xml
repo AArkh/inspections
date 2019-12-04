@@ -19,7 +19,6 @@
         <localInspection
                 language="JAVA"
                 displayName="Java calling Kotlin method annotated with @Throws"
-                groupPath="Java"
                 groupBundle="messages.InspectionsBundle"
                 groupKey="group.names.probable.bugs"
                 enabledByDefault="true"
@@ -28,16 +27,17 @@
         />
     </extensions>
 
-
-    <!--extensions defaultExtensionNs="com.intellij">
+    <extensions defaultExtensionNs="com.intellij">
         <localInspection
-                displayName="SDK: '==' or '!=' used instead of 'equals()'"
-                groupPath="Kotlin"
+                language="kotlin"
+                displayName="Kotlin uncheckable exception throwing"
+                groupBundle="messages.InspectionsBundle"
+                groupKey="group.names.probable.bugs"
                 enabledByDefault="true"
                 level="WARNING"
-                implementationClass="com.plugin.inspection.KotlinNotAnnotatedInspection"
+                implementationClass="com.plugin.inspection.KotlinDangerousMethodInspection"
         />
-    </extensions-->
+    </extensions>
 
     <!-- Compatible with the following versions of IntelliJ Platform -->
     <idea-version since-build="150"/>
