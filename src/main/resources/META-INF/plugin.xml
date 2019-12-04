@@ -37,10 +37,19 @@
                 level="WARNING"
                 implementationClass="com.plugin.inspection.KotlinDangerousMethodInspection"
         />
+
+        <localInspection
+                language="kotlin"
+                displayName="Kotlin try/catch surround"
+                groupBundle="messages.InspectionsBundle"
+                groupKey="group.names.probable.bugs"
+                enabledByDefault="true"
+                level="WARNING"
+                implementationClass="com.plugin.inspection.KotlinThrowsMethodInspection"
+        />
     </extensions>
 
     <!-- Compatible with the following versions of IntelliJ Platform -->
-    <idea-version since-build="150"/>
     <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
          on how to target different products -->
     <depends>com.intellij.modules.lang</depends>
