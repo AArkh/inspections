@@ -1,13 +1,15 @@
 package com.plugin.inspection
 
 import com.intellij.codeInsight.daemon.GroupNames
-import com.intellij.codeInspection.AbstractBaseUastLocalInspectionTool
-import com.intellij.codeInspection.LocalInspectionToolSession
-import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.*
+import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiMethod
+import com.intellij.psi.util.PsiUtilBase
 import com.intellij.uast.UastVisitorAdapter
+import com.intellij.util.IncorrectOperationException
 import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.idea.codeInsight.surroundWith.statement.KotlinTryCatchSurrounder
 import org.jetbrains.uast.UCallExpression
 import org.jetbrains.uast.util.isMethodCall
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
@@ -46,9 +48,9 @@ class KotlinThrowsMethodInspection : AbstractBaseUastLocalInspectionTool() {
                             parent = parent.parent
                         }
                         holder.registerProblem(
-                                node.sourcePsi!!,
-                                "Surround expression with try/catch",
-                                CriQuickFix()
+                            node.sourcePsi!!,
+                            "Surround expression with try/catch",
+                            CriQuickFix()
                         )
                     }
                 }
@@ -89,7 +91,7 @@ private class CriQuickFix : LocalQuickFix {
             val editor = PsiUtilBase.findEditor(element)!!
             KotlinTryCatchSurrounder().surroundElements(project, editor, arrayOf(element))
         } catch (e: IncorrectOperationException) {
-           e.printStackTrace()
+            e.printStackTrace()
         }
 
     }
