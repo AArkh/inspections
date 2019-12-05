@@ -49,14 +49,14 @@ class KotlinThrowsMethodInspection : AbstractBaseUastLocalInspectionTool() {
                         }
                         val pp = node.sourcePsi
                         val pslpapa = if (pp?.parent?.node?.elementType?.toString() == "DOT_QUALIFIED_EXPRESSION") {
-                            pp.parent.parent
+                            pp.parent
                         } else {
                             pp
                         }
                         holder.registerProblem(
-                                pslpapa!!,
-                                "Surround expression with try/catch",
-                                CriQuickFix()
+                            pslpapa!!,
+                            "Surround expression with try/catch",
+                            CriQuickFix()
                         )
                     }
                 }
