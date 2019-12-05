@@ -2,7 +2,10 @@ package com.plugin.inspection;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.impl.quickfix.SurroundWithTryCatchFix;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.AbstractBaseUastLocalInspectionTool;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -14,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class JavaCallingKotlinExceptionInspection extends AbstractBaseUastLocalInspectionTool {
 	
-	public static final String QUICK_FIX_NAME = "SDK: " + InspectionsBundle.message("inspection.comparing.references.use.quickfix");
+	public static final String QUICK_FIX_NAME = "Surround expression with try/catch";
 	
 	private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.JavaCallingKotlinExceptionInspection");
 	
@@ -47,7 +50,6 @@ public class JavaCallingKotlinExceptionInspection extends AbstractBaseUastLocalI
 			@Override
 			public void visitMethodCallExpression(PsiMethodCallExpression expression) {
 				super.visitMethodCallExpression(expression);
-				PsiExpressionList expressionList = expression.getArgumentList();
 				
 				PsiMethod psiMethod = expression.resolveMethod();
 				PsiModifierList psiModifierList = psiMethod.getModifierList();

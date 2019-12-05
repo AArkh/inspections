@@ -31,7 +31,6 @@ intellij {
     pluginName 'Custom Plugin'
     plugins 'Kotlin'
     updateSinceUntilBuild false
-    //alternativeIdePath "/Applications/Android Studio.app/Contents/"
 }
 
 dependencies {

@@ -36,8 +36,8 @@ class KotlinThrowsMethodInspection : AbstractBaseUastLocalInspectionTool() {
                     val containsThrowsAnnotation = psiMethod?.annotations?.find { it.qualifiedName == "kotlin.jvm.Throws" } != null
                     if (containsThrowsAnnotation) {
                         holder.registerProblem(
-                                node.sourcePsi!!,
-                                "Surround expression with try/catch"
+                            node.sourcePsi!!,
+                            "Surround expression with try/catch"
                         )
                     }
                 }
