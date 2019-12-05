@@ -1,13 +1,15 @@
 package com.plugin.inspection
 
 import com.intellij.codeInsight.daemon.GroupNames
-import com.intellij.codeInspection.AbstractBaseUastLocalInspectionTool
-import com.intellij.codeInspection.LocalInspectionToolSession
-import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.*
+import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiMethod
+import com.intellij.psi.util.PsiUtilBase
 import com.intellij.uast.UastVisitorAdapter
+import com.intellij.util.IncorrectOperationException
 import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.idea.codeInsight.surroundWith.statement.KotlinTryCatchSurrounder
 import org.jetbrains.uast.UCallExpression
 import org.jetbrains.uast.util.isMethodCall
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
@@ -37,7 +39,8 @@ class KotlinThrowsMethodInspection : AbstractBaseUastLocalInspectionTool() {
                     if (containsThrowsAnnotation) {
                         holder.registerProblem(
                                 node.sourcePsi!!,
-                                "Surround expression with try/catch"
+                                "Surround expression with try/catch",
+                                CriQuickFix()
                         )
                     }
                 }
@@ -46,5 +49,44 @@ class KotlinThrowsMethodInspection : AbstractBaseUastLocalInspectionTool() {
         },
             true
         )
+    }
+}
+
+/**
+ * This class provides a solution to inspection problem expressions by manipulating
+ * the PSI tree to use a.equals(b) instead of '==' or '!='
+ */
+private class CriQuickFix : LocalQuickFix {
+
+    /**
+     * Returns a partially localized string for the quick fix intention.
+     * Used by the test code for this plugin.
+     *
+     * @return Quick fix short name.
+     */
+    override fun getName(): String {
+        return "Surround with try / catch"
+    }
+
+    /**
+     * This method manipulates the PSI tree to replace 'a==b' with 'a.equals(b)
+     * or 'a!=b' with '!a.equals(b)'
+     *
+     * @param project    The project that contains the file being edited.
+     * @param descriptor A problem found by this inspection.
+     */
+    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+        try {
+            var element = descriptor.psiElement
+            val editor = PsiUtilBase.findEditor(element)!!
+            KotlinTryCatchSurrounder().surroundElements(project, editor, arrayOf(element))
+        } catch (e: IncorrectOperationException) {
+           println("ERROR $e")
+        }
+
+    }
+
+    override fun getFamilyName(): String {
+        return name
     }
 }
