@@ -1,9 +1,8 @@
 package com.plugin.inspection
 
 import com.intellij.codeInsight.daemon.GroupNames
-import com.intellij.codeInspection.AbstractBaseUastLocalInspectionTool
-import com.intellij.codeInspection.LocalInspectionToolSession
-import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.*
+import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.uast.UastVisitorAdapter
@@ -13,6 +12,8 @@ import org.jetbrains.uast.getContainingMethod
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
 class KotlinDangerousMethodInspection : AbstractBaseUastLocalInspectionTool() {
+
+    val quickFix = AnnotateDangerousMethodQuickFix()
 
     @Nls
     override fun getDisplayName(): String {
@@ -52,7 +53,8 @@ class KotlinDangerousMethodInspection : AbstractBaseUastLocalInspectionTool() {
 
                 holder.registerProblem(
                     node.sourcePsi!!,
-                    "Please, bud' lapkoy, add kotlin.jvm.Throws annotation to method signature!"
+                    "Please, bud' lapkoy, add kotlin.jvm.Throws annotation to method signature!",
+                    quickFix
                 )
                 return false
             }
@@ -60,4 +62,18 @@ class KotlinDangerousMethodInspection : AbstractBaseUastLocalInspectionTool() {
             true
         )
     }
+}
+
+class AnnotateDangerousMethodQuickFix : LocalQuickFix {
+
+    override fun getName(): String {
+        return "Add @kotlin.jvm.Throws annotation to method signature"
+    }
+
+    override fun getFamilyName(): String = name
+
+    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+        val psiElem = descriptor.psiElement
+    }
+
 }

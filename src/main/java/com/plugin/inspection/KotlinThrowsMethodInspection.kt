@@ -97,7 +97,7 @@ private class CriQuickFix : LocalQuickFix {
             val editor = PsiUtilBase.findEditor(element)!!
             KotlinTryCatchSurrounder().surroundElements(project, editor, arrayOf(element))
         } catch (e: IncorrectOperationException) {
-           e.printStackTrace()
+            e.printStackTrace()
         }
 
     }
