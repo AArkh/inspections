@@ -35,9 +35,20 @@ class KotlinThrowsMethodInspection : AbstractBaseUastLocalInspectionTool() {
                     val psiMethod: PsiMethod? = node.resolve()
                     val containsThrowsAnnotation = psiMethod?.annotations?.find { it.qualifiedName == "kotlin.jvm.Throws" } != null
                     if (containsThrowsAnnotation) {
+                        var parent = node.sourcePsi
+                        while (true) {
+                            if (parent?.node?.elementType?.toString() == "TRY") {
+                                return false
+                            }
+                            if (parent == null) {
+                                break
+                            }
+                            parent = parent.parent
+                        }
                         holder.registerProblem(
-                            node.sourcePsi!!,
-                            "Surround expression with try/catch"
+                                node.sourcePsi!!,
+                                "Surround expression with try/catch",
+                                CriQuickFix()
                         )
                     }
                 }
@@ -46,5 +57,44 @@ class KotlinThrowsMethodInspection : AbstractBaseUastLocalInspectionTool() {
         },
             true
         )
+    }
+}
+
+/**
+ * This class provides a solution to inspection problem expressions by manipulating
+ * the PSI tree to use a.equals(b) instead of '==' or '!='
+ */
+private class CriQuickFix : LocalQuickFix {
+
+    /**
+     * Returns a partially localized string for the quick fix intention.
+     * Used by the test code for this plugin.
+     *
+     * @return Quick fix short name.
+     */
+    override fun getName(): String {
+        return "Surround with try / catch"
+    }
+
+    /**
+     * This method manipulates the PSI tree to replace 'a==b' with 'a.equals(b)
+     * or 'a!=b' with '!a.equals(b)'
+     *
+     * @param project    The project that contains the file being edited.
+     * @param descriptor A problem found by this inspection.
+     */
+    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+        try {
+            val element = descriptor.psiElement
+            val editor = PsiUtilBase.findEditor(element)!!
+            KotlinTryCatchSurrounder().surroundElements(project, editor, arrayOf(element))
+        } catch (e: IncorrectOperationException) {
+           e.printStackTrace()
+        }
+
+    }
+
+    override fun getFamilyName(): String {
+        return name
     }
 }
