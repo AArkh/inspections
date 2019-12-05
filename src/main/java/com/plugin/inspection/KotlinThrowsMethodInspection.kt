@@ -37,6 +37,16 @@ class KotlinThrowsMethodInspection : AbstractBaseUastLocalInspectionTool() {
                     val psiMethod: PsiMethod? = node.resolve()
                     val containsThrowsAnnotation = psiMethod?.annotations?.find { it.qualifiedName == "kotlin.jvm.Throws" } != null
                     if (containsThrowsAnnotation) {
+                        var parent = node.sourcePsi
+                        while (true) {
+                            if (parent?.node?.elementType?.toString() == "TRY") {
+                                return false
+                            }
+                            if (parent == null) {
+                                break
+                            }
+                            parent = parent.parent
+                        }
                         holder.registerProblem(
                                 node.sourcePsi!!,
                                 "Surround expression with try/catch",
@@ -77,11 +87,11 @@ private class CriQuickFix : LocalQuickFix {
      */
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
         try {
-            var element = descriptor.psiElement
+            val element = descriptor.psiElement
             val editor = PsiUtilBase.findEditor(element)!!
             KotlinTryCatchSurrounder().surroundElements(project, editor, arrayOf(element))
         } catch (e: IncorrectOperationException) {
-           println("ERROR $e")
+           e.printStackTrace()
         }
 
     }
