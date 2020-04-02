@@ -1,79 +1,97 @@
 package com.plugin.inspection
 
 import com.intellij.codeInsight.daemon.GroupNames
-import com.intellij.codeInspection.*
-import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiAnnotation
+import com.intellij.codeInspection.LocalInspectionToolSession
+import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.lang.ASTNode
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
-import com.intellij.uast.UastVisitorAdapter
-import org.jetbrains.annotations.Nls
-import org.jetbrains.uast.UThrowExpression
-import org.jetbrains.uast.getContainingMethod
-import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
+import com.plugin.inspection.fix.AnnotateDangerousMethodQuickFix
+import com.plugin.inspection.fix.KotlinThrowExpressionTryCatchQuickFix
+import org.jetbrains.kotlin.idea.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.children
+import org.jetbrains.kotlin.resolve.calls.callUtil.getCalleeExpressionIfAny
+import java.util.*
 
-class KotlinDangerousMethodInspection : AbstractBaseUastLocalInspectionTool() {
+private const val PROBLEM_NAME = "Kotlin \"throw\" operator without corresponding annotation or try/catch block"
 
-    val quickFix = AnnotateDangerousMethodQuickFix()
-
-    @Nls
-    override fun getDisplayName(): String {
-        return "Java calling Kotlin inspection"
-    }
-
-    @Nls
-    override fun getGroupDisplayName(): String {
-        return GroupNames.STYLE_GROUP_NAME
-    }
-
-    override fun isEnabledByDefault(): Boolean = true
-
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
-        return UastVisitorAdapter(object : AbstractUastNonRecursiveVisitor() {
-
-            override fun visitThrowExpression(node: UThrowExpression): Boolean {
-                super.visitThrowExpression(node)
-
-                val papaMethod = node.getContainingMethod()
-                val papaMethodAnnotations: Array<PsiAnnotation> = papaMethod?.annotations ?: return false
-
-                if (papaMethodAnnotations.any { it.qualifiedName == "kotlin.jvm.Throws" }) {
-                    return false
-                }
-
-                var parent = node.sourcePsi
-                while (true) {
-                    if (parent?.node?.elementType?.toString() == "TRY") {
-                        return false
-                    }
-                    if (parent == null) {
-                        break
-                    }
-                    parent = parent.parent
-                }
-
-                holder.registerProblem(
-                    node.sourcePsi!!,
-                    "Please, bud' lapkoy, add kotlin.jvm.Throws annotation to method signature!",
-                    quickFix
-                )
-                return false
-            }
-        },
-            true
-        )
-    }
-}
-
-class AnnotateDangerousMethodQuickFix : LocalQuickFix {
-
-    override fun getName(): String {
-        return "Add @kotlin.jvm.Throws annotation to method signature"
-    }
-
-    override fun getFamilyName(): String = name
-
-    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-        val psiElem = descriptor.psiElement
-    }
-
+class KotlinDangerousMethodInspection : AbstractKotlinInspection() {
+	
+	private val addTryCatchQuickFix = KotlinThrowExpressionTryCatchQuickFix()
+	private val addThrowsAnnotationFix = AnnotateDangerousMethodQuickFix()
+	
+	override fun getDisplayName(): String = PROBLEM_NAME
+	
+	override fun getGroupDisplayName(): String = GroupNames.BUGS_GROUP_NAME
+	
+	override fun isEnabledByDefault(): Boolean = true
+	
+	override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
+		return object : KtVisitorVoid() {
+			override fun visitThrowExpression(expression: KtThrowExpression) {
+				super.visitThrowExpression(expression)
+				if (expression.isCaught()) {
+					return
+				}
+				val method = expression.getContainingMethod() ?: return
+				val throwsAnnotation: KtAnnotationEntry? = method.getThrowsAnnotation()
+				if (throwsAnnotation == null) {
+					holder.registerProblem(
+						expression,
+						PROBLEM_NAME,
+						addThrowsAnnotationFix,
+						addTryCatchQuickFix
+					)
+					return
+				}
+				
+				val exceptionReferences: List<KtNameReferenceExpression> = throwsAnnotation.getExceptionReferences()
+				if (exceptionReferences.isEmpty()) {
+					return
+				}
+				val currentThrownExceptionReference: KtNameReferenceExpression? = expression.getCurrentThrownException()
+				val exceptionAnnotated = exceptionReferences.any { reference: KtNameReferenceExpression ->
+					currentThrownExceptionReference?.textMatches(reference) ?: false
+				}
+				if (exceptionAnnotated) {
+					return
+				}
+				holder.registerProblem(
+					expression,
+					PROBLEM_NAME,
+					addThrowsAnnotationFix,
+					addTryCatchQuickFix
+				)
+			}
+		}
+	}
+	
+	private fun KtAnnotationEntry.getExceptionReferences() : List<KtNameReferenceExpression> {
+		val list = LinkedList<KtNameReferenceExpression>()
+		(this.valueArguments.firstOrNull() as KtValueArgument?)
+			?.node
+			?.children()
+			?.forEach { child: ASTNode ->
+				val ktNameReferenceExpression: PsiElement? = child.firstChildNode?.psi
+				if (ktNameReferenceExpression != null && ktNameReferenceExpression is KtNameReferenceExpression) {
+					// тут можно получить ссылку на собственно java класс, но я так и не понял, как
+					// достать super-классы из этой ссылки.
+					//val reference: KtTypeReference? = (ktNameReferenceExpression.resolve() as KtTypeAlias).getTypeReference()
+					list.add(ktNameReferenceExpression)
+				}
+			}
+		return list
+	}
+	
+	private fun KtThrowExpression.getCurrentThrownException() : KtNameReferenceExpression? {
+		val currentThrownExceptionReference: KtExpression? = thrownExpression
+			?.getCalleeExpressionIfAny()
+		if (currentThrownExceptionReference == null
+			|| currentThrownExceptionReference !is KtNameReferenceExpression
+		) {
+			return null
+		}
+		return currentThrownExceptionReference
+	}
 }

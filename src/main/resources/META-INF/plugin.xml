@@ -1,64 +1,46 @@
 <idea-plugin>
-    <id>com.custom.plugin</id>
-    <name>Custom Plugin</name>
-    <vendor email="test@example.com" url="http://www.example.com">Example</vendor>
+	<id>com.custom.plugin</id>
+	<name>Drom code inspections</name>
+	<vendor email="test@example.com" url="http://www.example.com">Example</vendor>
 
-    <description><![CDATA[
+	<description><![CDATA[
       Demo plugin written in Kotlin for Kotlin syntax check to ensure camelcase naming
       and also a notification plugin
     ]]></description>
 
-    <change-notes><![CDATA[
+	<change-notes><![CDATA[
       Release notes : Camelcase naming check and Notification plugin
     ]]>
-    </change-notes>
+	</change-notes>
 
-    <depends>com.intellij.modules.java</depends>
+	<depends>com.intellij.modules.java</depends>
 
-    <extensions defaultExtensionNs="com.intellij">
-        <localInspection
-                language="JAVA"
-                displayName="Java calling Kotlin method annotated with @Throws"
-                groupBundle="messages.InspectionsBundle"
-                groupKey="group.names.probable.bugs"
-                enabledByDefault="true"
-                level="WARNING"
-                implementationClass="com.plugin.inspection.JavaCallingKotlinExceptionInspection"
-        />
-    </extensions>
+	<extensions defaultExtensionNs="com.intellij">
+		<localInspection
+			language="kotlin"
+			displayName="Kotlin 'throw' operator without corresponding annotation or try/catch block"
+			groupBundle="messages.InspectionsBundle"
+			groupKey="group.names.probable.bugs"
+			enabledByDefault="true"
+			level="WARNING"
+			implementationClass="com.plugin.inspection.KotlinDangerousMethodInspection"
+		/>
 
-    <extensions defaultExtensionNs="com.intellij">
-        <localInspection
-                language="kotlin"
-                displayName="Kotlin uncheckable exception throwing"
-                groupBundle="messages.InspectionsBundle"
-                groupKey="group.names.probable.bugs"
-                enabledByDefault="true"
-                level="WARNING"
-                implementationClass="com.plugin.inspection.KotlinDangerousMethodInspection"
-        />
+		<localInspection
+			language="kotlin"
+			displayName="Kotlin try/catch surround"
+			groupBundle="messages.InspectionsBundle"
+			groupKey="group.names.probable.bugs"
+			enabledByDefault="true"
+			level="WARNING"
+			implementationClass="com.plugin.inspection.KotlinThrowsMethodInspection"
+		/>
+	</extensions>
 
-        <localInspection
-                language="kotlin"
-                displayName="Kotlin try/catch surround"
-                groupBundle="messages.InspectionsBundle"
-                groupKey="group.names.probable.bugs"
-                enabledByDefault="true"
-                level="WARNING"
-                implementationClass="com.plugin.inspection.KotlinThrowsMethodInspection"
-        />
-    </extensions>
-
-    <!-- Compatible with the following versions of IntelliJ Platform -->
-    <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
-         on how to target different products -->
-    <depends>com.intellij.modules.platform</depends>
-    <depends>com.intellij.modules.lang</depends>
-    <depends>org.jetbrains.kotlin</depends>
-
-    <project-components>
-        <component>
-            <implementation-class>com.plugin.inspection.CustomNotificationComponent</implementation-class>
-        </component>
-    </project-components>
+	<!-- Compatible with the following versions of IntelliJ Platform -->
+	<!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
+		 on how to target different products -->
+	<depends>com.intellij.modules.platform</depends>
+	<depends>com.intellij.modules.lang</depends>
+	<depends>org.jetbrains.kotlin</depends>
 </idea-plugin>
