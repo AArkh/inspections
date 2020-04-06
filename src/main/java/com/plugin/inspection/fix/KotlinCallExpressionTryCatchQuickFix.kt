@@ -9,6 +9,7 @@ import com.intellij.psi.util.PsiUtilBase
 import org.jetbrains.kotlin.idea.codeInsight.surroundWith.statement.KotlinTryCatchSurrounder
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtThrowExpression
 
 class KotlinCallExpressionTryCatchQuickFix : LocalQuickFix {
 	
@@ -18,14 +19,14 @@ class KotlinCallExpressionTryCatchQuickFix : LocalQuickFix {
 	
 	override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
 		try {
-			val elementToBeSurrounded: PsiElement = descriptor.psiElement ?: return
-			if (elementToBeSurrounded !is KtCallExpression) {
-				return
+			val elementToBeFixed: PsiElement = descriptor.psiElement ?: return
+			val elementsToBeSurrounded = when(elementToBeFixed) {
+				is KtCallExpression -> getElementsToBeSurrounded(elementToBeFixed)
+				is KtThrowExpression -> arrayOf(elementToBeFixed)
+				else -> throw IllegalStateException("Can't use this stuff =(")
 			}
-			val editor: Editor = PsiUtilBase.findEditor(elementToBeSurrounded) ?: return
-			KotlinTryCatchSurrounder().surroundElements(
-				project, editor, getElementsToBeSurrounded(elementToBeSurrounded)
-			)
+			val editor: Editor = PsiUtilBase.findEditor(elementToBeFixed) ?: return
+			KotlinTryCatchSurrounder().surroundElements(project, editor, elementsToBeSurrounded)
 		} catch (ignored: Exception) {
 		}
 	}

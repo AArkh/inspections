@@ -15,7 +15,6 @@ class AnnotateDangerousMethodQuickFix : LocalQuickFix {
 	
 	override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
 		val expression: PsiElement = descriptor.psiElement ?: return
-		
 		try {
 			val methodToBeFixed = expression.getContainingMethod() ?: return
 			val annotation = KtPsiFactory(methodToBeFixed).createAnnotationEntry("@Throws")
