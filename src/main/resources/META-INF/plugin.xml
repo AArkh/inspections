@@ -1,15 +1,14 @@
 <idea-plugin>
 	<id>com.custom.plugin</id>
 	<name>Drom code inspections</name>
-	<vendor email="test@example.com" url="http://www.example.com">Example</vendor>
+	<vendor email="arkharov@drom.ru" url="https://www.drom.ru/">Drom</vendor>
 
 	<description><![CDATA[
-      Demo plugin written in Kotlin for Kotlin syntax check to ensure camelcase naming
-      and also a notification plugin
+      Plugin written in Kotlin for Kotlin syntax check to ensure that exceptions are checked
     ]]></description>
 
 	<change-notes><![CDATA[
-      Release notes : Camelcase naming check and Notification plugin
+      Release notes : Initial release of a plugin
     ]]>
 	</change-notes>
 
