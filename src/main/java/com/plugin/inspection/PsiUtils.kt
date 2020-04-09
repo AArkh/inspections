@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.classId
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 fun PsiElement?.getContainingMethod(): KtNamedFunction? {
-	var element = this
+	var element: PsiElement? = this
 	do {
 		if (element is KtNamedFunction) {
 			return element
@@ -21,7 +21,7 @@ fun PsiElement?.getContainingMethod(): KtNamedFunction? {
 }
 
 fun KtElement.isCaught(): Boolean {
-	var element = this.parent
+	var element: PsiElement? = this.parent
 	do {
 		when (element) {
 			is KtCatchClause -> return false // ибо KtCatchClause дочерний у KtTryExpression

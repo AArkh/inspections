@@ -34,12 +34,15 @@ intellij {
     pluginName 'Custom Plugin'
     plugins = ['org.jetbrains.kotlin:1.3.61-release-Studio3.5-1', 'android']
     updateSinceUntilBuild false
+    /* Для тестирования плагина запускается таска "runIde". По умолчанию запускается экземпляр той intelliJ IDEA,
+     * с которой ты работаешь. Этой переменной можно задать путь к другой IDEA-like ide'шке и для тестирования
+     * использовать её. */
     //alternativeIdePath '/Applications/Android Studio.app/Contents'
 }
 
 dependencies {
     compileOnly "org.jetbrains.kotlin:kotlin-gradle-plugin:1.3.61"
-    
+
     testCompile group: 'junit', name: 'junit', version: '4.12'
 }
 

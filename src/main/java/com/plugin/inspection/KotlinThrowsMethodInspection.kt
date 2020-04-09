@@ -8,7 +8,6 @@ import com.intellij.psi.PsiElementVisitor
 import com.plugin.inspection.fix.AnnotateDangerousMethodQuickFix
 import com.plugin.inspection.fix.KotlinCallExpressionTryCatchQuickFix
 import org.jetbrains.kotlin.idea.inspections.AbstractKotlinInspection
-import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtElement
@@ -18,7 +17,11 @@ import org.jetbrains.kotlin.psi.KtVisitorVoid
 private const val PROBLEM_NAME = "Kotlin calling explosive functions inspection"
 
 /**
- * https://github.com/JetBrains/kotlin/tree/master/idea/src/org/jetbrains/kotlin/idea/inspections
+ * Инспекция, проверяющая каждый вызов котлин-методов на предмет аннотации throw у последних
+ * и предлагающая добавить соответствующую аннотацию в декларацию метода, в котором оное выражение встречается,
+ * либо обернуть в try/catch.
+ *
+ * Использует [KotlinCallExpressionTryCatchQuickFix] и [AnnotateDangerousMethodQuickFix]
  */
 class KotlinThrowsMethodInspection : AbstractKotlinInspection() {
 	
@@ -35,12 +38,11 @@ class KotlinThrowsMethodInspection : AbstractKotlinInspection() {
 		return object : KtVisitorVoid() {
 			override fun visitCallExpression(expression: KtCallExpression) {
 				super.visitCallExpression(expression)
-				val reference: KtReference = expression.calleeExpression?.mainReference ?: return
-				val calledElement: PsiElement = reference.resolve() ?: return
-				if (calledElement !is KtNamedFunction
-					|| !calledElement.hasThrowsAnnotation()
-					|| expression.isCaught()
-				) {
+				val calledElement: PsiElement = expression.calleeExpression
+					?.mainReference
+					?.resolve()
+					?: return
+				if (!shouldAddThrowAnnotation(calledElement, expression)) {
 					return
 				}
 				if (expression.canBeAnnotated()) {
@@ -59,6 +61,12 @@ class KotlinThrowsMethodInspection : AbstractKotlinInspection() {
 				}
 			}
 		}
+	}
+	
+	private fun shouldAddThrowAnnotation(calledElement: PsiElement, expression: KtCallExpression): Boolean {
+		return calledElement is KtNamedFunction
+			&& calledElement.hasThrowsAnnotation()
+			&& !expression.isCaught()
 	}
 	
 	private fun KtElement.canBeAnnotated() : Boolean {

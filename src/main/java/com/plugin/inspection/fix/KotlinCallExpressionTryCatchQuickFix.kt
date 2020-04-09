@@ -11,6 +11,9 @@ import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtThrowExpression
 
+/**
+ * Оборачивалка выражений в блок try/catch
+ */
 class KotlinCallExpressionTryCatchQuickFix : LocalQuickFix {
 	
 	override fun getName(): String = "Surround call expression with try/catch"
@@ -18,17 +21,14 @@ class KotlinCallExpressionTryCatchQuickFix : LocalQuickFix {
 	override fun getFamilyName(): String = name
 	
 	override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-		try {
-			val elementToBeFixed: PsiElement = descriptor.psiElement ?: return
-			val elementsToBeSurrounded = when(elementToBeFixed) {
-				is KtCallExpression -> getElementsToBeSurrounded(elementToBeFixed)
-				is KtThrowExpression -> arrayOf(elementToBeFixed)
-				else -> throw IllegalStateException("Can't use this stuff =(")
-			}
-			val editor: Editor = PsiUtilBase.findEditor(elementToBeFixed) ?: return
-			KotlinTryCatchSurrounder().surroundElements(project, editor, elementsToBeSurrounded)
-		} catch (ignored: Exception) {
+		val elementToBeFixed: PsiElement = descriptor.psiElement ?: return
+		val elementsToBeSurrounded: Array<out PsiElement> = when(elementToBeFixed) {
+			is KtCallExpression -> getElementsToBeSurrounded(elementToBeFixed)
+			is KtThrowExpression -> arrayOf(elementToBeFixed)
+			else -> throw IllegalStateException("Can't use this stuff =(")
 		}
+		val editor: Editor = PsiUtilBase.findEditor(elementToBeFixed) ?: return
+		KotlinTryCatchSurrounder().surroundElements(project, editor, elementsToBeSurrounded)
 	}
 	
 	private fun getElementsToBeSurrounded(callExpression: KtCallExpression): Array<PsiElement> {
@@ -43,7 +43,7 @@ class KotlinCallExpressionTryCatchQuickFix : LocalQuickFix {
 	 * [[[[[Builder().a()].b()].c()].d()].build()]. Этот метод достает верхний [KtDotQualifiedExpression] дерева.
 	 */
 	private fun KtDotQualifiedExpression.retrieveParentKtDotExpression(): KtDotQualifiedExpression {
-		var dotQualifiedExpression = this
+		var dotQualifiedExpression: KtDotQualifiedExpression = this
 		while (dotQualifiedExpression.parent is KtDotQualifiedExpression) {
 			dotQualifiedExpression = dotQualifiedExpression.parent as KtDotQualifiedExpression
 		}

@@ -19,10 +19,15 @@ import org.jetbrains.kotlin.resolve.calls.callUtil.getCalleeExpressionIfAny
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.TypeProjection
 import java.util.*
-import kotlin.collections.LinkedHashSet
 
 private const val PROBLEM_NAME = "Kotlin \"throw\" operator without corresponding annotation or try/catch block"
 
+/**
+ * Инспекция, проверяющая каждое выражение throw и предлагающая добавить соответствующую аннотацию
+ * в декларацию метода, в котором оное выражение встречается, либо обернуть в try/catch.
+ *
+ * Использует [KotlinCallExpressionTryCatchQuickFix] и [KotlinAddExceptionToThrowAnnotationQuickFix]
+ */
 class KotlinDangerousMethodInspection : AbstractKotlinInspection() {
 	
 	private val addTryCatchQuickFix = KotlinCallExpressionTryCatchQuickFix()
@@ -40,53 +45,51 @@ class KotlinDangerousMethodInspection : AbstractKotlinInspection() {
 				if (expression.isCaught()) {
 					return
 				}
-				val method = expression.getContainingMethod() ?: return
-				val throwsAnnotation: KtAnnotationEntry? = method.getThrowsAnnotation()
-				val exceptionName: String = expression.thrownExpression?.firstChild?.text ?: "Exception"
+				val containingMethod: KtNamedFunction = expression.getContainingMethod() ?: return
+				val throwsAnnotation: KtAnnotationEntry? = containingMethod.getThrowsAnnotation()
 				if (throwsAnnotation == null) {
-					holder.registerProblem(
-						expression,
-						PROBLEM_NAME,
-						KotlinAddExceptionToThrowAnnotationQuickFix(exceptionName),
-						addTryCatchQuickFix
-					)
+					registerProblem(holder, expression)
 					return
 				}
-				val exceptionReferences: List<String> = throwsAnnotation.getExceptionReferences()
-				if (exceptionReferences.isEmpty()) {
-					return
+				if (shouldAddThrownExceptionToThrowsArguments(expression, throwsAnnotation)) {
+					registerProblem(holder, expression)
 				}
-				val thrownException = expression.getExceptionType() ?: return
-				val exceptionTypes: MutableList<PsiClass> = LinkedList()
-				thrownException.getSuperClassTree(exceptionTypes)
-				val exceptionNames: List<String> = exceptionTypes.map { psiClass: PsiClass ->
-					return@map psiClass.name!!
-				}
-				var isThrownExceptionAlreadyAnnotated = false
-				for (name: String in exceptionNames) {
-					if (exceptionReferences.contains(name)) {
-						isThrownExceptionAlreadyAnnotated = true
-						break
-					}
-				}
-				if (isThrownExceptionAlreadyAnnotated) {
-					return
-				}
-				holder.registerProblem(
-					expression,
-					PROBLEM_NAME,
-					KotlinAddExceptionToThrowAnnotationQuickFix(exceptionName),
-					addTryCatchQuickFix
-				)
 			}
 		}
+	}
+	
+	private fun shouldAddThrownExceptionToThrowsArguments(
+		expression: KtThrowExpression,
+		throwsAnnotation: KtAnnotationEntry
+	) : Boolean {
+		val annotatedExceptions: List<String> = throwsAnnotation.getExceptionReferences()
+		if (annotatedExceptions.isEmpty()) {
+			return false
+		}
+		val thrownException: PsiClass = expression.getExceptionType() ?: return false
+		val exceptionTypes: MutableList<PsiClass> = LinkedList()
+		thrownException.getSuperClassTree(exceptionTypes)
+		val exceptionNames: List<String> = exceptionTypes.map { psiClass: PsiClass ->
+			return@map psiClass.name!!
+		}
+		return exceptionNames.find { annotatedExceptions.contains(it) } == null
+	}
+	
+	private fun registerProblem(holder: ProblemsHolder, expression: KtThrowExpression) {
+		val exceptionName: String = expression.thrownExpression?.firstChild?.text ?: "Exception"
+		holder.registerProblem(
+			expression,
+			PROBLEM_NAME,
+			KotlinAddExceptionToThrowAnnotationQuickFix(exceptionName),
+			addTryCatchQuickFix
+		)
 	}
 	
 	/**
 	 * Достаем из набора аннотации Throw список исключений, добавленных к ней в аргументы.
 	 */
 	private fun KtAnnotationEntry.getExceptionReferences(): List<String> {
-		val set = LinkedHashSet<String>()
+		val exceptionReferences = LinkedList<String>()
 		valueArguments.forEach { valueArg: ValueArgument ->
 			(valueArg as KtValueArgument).node.children().forEach node@{ astChild: ASTNode ->
 				val exceptionKotlinClassLiteral: KtClassLiteralExpression = astChild.psi as? KtClassLiteralExpression
@@ -94,14 +97,14 @@ class KotlinDangerousMethodInspection : AbstractKotlinInspection() {
 				try {
 					val exceptionType: KotlinType = exceptionKotlinClassLiteral.resolveType()
 					exceptionType.arguments.forEach { typeProjection: TypeProjection ->
-						set.add(typeProjection.toString())
+						exceptionReferences.add(typeProjection.toString())
 					}
 				} catch (ignored: Exception) {
 					return@node
 				}
 			}
 		}
-		return set.toList()
+		return exceptionReferences
 	}
 	
 	/**
@@ -111,20 +114,12 @@ class KotlinDangerousMethodInspection : AbstractKotlinInspection() {
 		val currentThrownExceptionReference: KtReferenceExpression = thrownExpression
 			?.getCalleeExpressionIfAny() as? KtReferenceExpression
 			?: return null
-		try {
-			val resolved: PsiElement = currentThrownExceptionReference.resolve() ?: return null
-			return when (resolved) {
-				is KtTypeAlias -> {
-					resolved.retrievePsiClass()
-				}
-				is ClsMethodImpl -> {
-					resolved.containingClass
-				}
-				else -> null
-			} ?: return null
-		} catch (ignored: Exception) {
+		val resolvedExceptionClass: PsiElement = currentThrownExceptionReference.resolve() ?: return null
+		return when (resolvedExceptionClass) {
+			is KtTypeAlias -> resolvedExceptionClass.retrievePsiClass()
+			is ClsMethodImpl -> resolvedExceptionClass.containingClass
+			else -> null
 		}
-		return null
 	}
 	
 	/**

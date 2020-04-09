@@ -12,8 +12,13 @@ import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.resolve.constants.ConstantValue
 import org.jetbrains.kotlin.resolve.constants.KClassValue
 
+/**
+ * Фикс, добавляющий ссылку на выбрасываемое исключение в аргументы аннотации [Throws] и, собственно, саму
+ * аннотацию, ежели таковой не имеется.
+ */
 class KotlinAddExceptionToThrowAnnotationQuickFix(
 	private val exceptionName: String
 ) : LocalQuickFix {
@@ -24,31 +29,30 @@ class KotlinAddExceptionToThrowAnnotationQuickFix(
 	
 	override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
 		val expression: PsiElement = descriptor.psiElement ?: return
-		try {
-			val methodToBeFixed: KtNamedFunction = expression.getContainingMethod() ?: return
-			val throwsAnnotation: KtAnnotationEntry? = methodToBeFixed.getThrowsAnnotation()
-			val hasThrownAnnotation = throwsAnnotation != null
-			val psiFactory = KtPsiFactory(methodToBeFixed)
-			val annotations: MutableList<KtValueArgument> = throwsAnnotation
-				?.getThrowAnnotationArgumentsList(psiFactory)
-				?: mutableListOf()
-			annotations.add(psiFactory.createArgument("$exceptionName::class"))
-			val replacementAnnotation = psiFactory.createAnnotationEntry("@Throws")
-			val valueArgumentList = psiFactory.buildValueArgumentList {
-				appendFixedText("(")
-				appendExpressions(annotations.map { argument: KtValueArgument ->
-					return@map argument.getArgumentExpression()
-				})
-				appendFixedText(")")
-			}
-			replacementAnnotation.add(valueArgumentList)
-			if (hasThrownAnnotation) {
-				throwsAnnotation?.replace(replacementAnnotation)
-			} else {
-				methodToBeFixed.addAnnotationEntry(replacementAnnotation)
-			}
-		} catch (ignored: Exception) {
+		val methodToBeFixed: KtNamedFunction = expression.getContainingMethod() ?: return
+		val throwsAnnotation: KtAnnotationEntry? = methodToBeFixed.getThrowsAnnotation()
+		val psiFactory = KtPsiFactory(methodToBeFixed)
+		val replacementAnnotation: KtAnnotationEntry = formReplacementAnnotation(throwsAnnotation, psiFactory)
+		val hasThrownAnnotation: Boolean = throwsAnnotation != null
+		if (hasThrownAnnotation) {
+			throwsAnnotation?.replace(replacementAnnotation)
+		} else {
+			methodToBeFixed.addAnnotationEntry(replacementAnnotation)
 		}
+	}
+	
+	private fun formReplacementAnnotation(
+		currentThrowsAnnotation: KtAnnotationEntry?,
+		psiFactory: KtPsiFactory
+	): KtAnnotationEntry {
+		val annotations: MutableList<KtValueArgument> = currentThrowsAnnotation
+			?.getThrowAnnotationArgumentsList(psiFactory)
+			?: mutableListOf()
+		annotations.add(psiFactory.createArgument("$exceptionName::class"))
+		val replacementAnnotation: KtAnnotationEntry = psiFactory.createAnnotationEntry("@Throws")
+		val annotationArgumentList: KtValueArgumentList = formNewAnnotationArguments(psiFactory, annotations)
+		replacementAnnotation.add(annotationArgumentList)
+		return replacementAnnotation
 	}
 	
 	private fun KtAnnotationEntry.getThrowAnnotationArgumentsList(
@@ -56,9 +60,9 @@ class KotlinAddExceptionToThrowAnnotationQuickFix(
 	): MutableList<KtValueArgument> {
 		val bindingContext: BindingContext = this.analyze()
 		val descriptor: AnnotationDescriptor? = bindingContext[BindingContext.ANNOTATION, this]
-		val name = descriptor?.fqName ?: return mutableListOf()
+		val name: FqName = descriptor?.fqName ?: return mutableListOf()
 		val argumentOutput: MutableList<KtValueArgument> = mutableListOf()
-		val arguments = descriptor.allValueArguments.values
+		val arguments: Collection<ConstantValue<*>> = descriptor.allValueArguments.values
 		if (name != FqName("kotlin.jvm.Throws")) {
 			return argumentOutput
 		}
@@ -74,5 +78,18 @@ class KotlinAddExceptionToThrowAnnotationQuickFix(
 			}
 		}
 		return argumentOutput
+	}
+	
+	private fun formNewAnnotationArguments(
+		psiFactory: KtPsiFactory,
+		annotations: MutableList<KtValueArgument>
+	): KtValueArgumentList {
+		return psiFactory.buildValueArgumentList {
+			appendFixedText("(")
+			appendExpressions(annotations.map { argument: KtValueArgument ->
+				return@map argument.getArgumentExpression()
+			})
+			appendFixedText(")")
+		}
 	}
 }
