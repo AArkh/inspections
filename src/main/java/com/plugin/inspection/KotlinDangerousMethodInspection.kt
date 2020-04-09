@@ -69,8 +69,8 @@ class KotlinDangerousMethodInspection : AbstractKotlinInspection() {
 		val thrownException: PsiClass = expression.getExceptionType() ?: return false
 		val exceptionTypes: MutableList<PsiClass> = LinkedList()
 		thrownException.getSuperClassTree(exceptionTypes)
-		val exceptionNames: List<String> = exceptionTypes.map { psiClass: PsiClass ->
-			return@map psiClass.name!!
+		val exceptionNames: List<String> = exceptionTypes.mapNotNull { psiClass: PsiClass ->
+			return@mapNotNull psiClass.name
 		}
 		return exceptionNames.find { annotatedExceptions.contains(it) } == null
 	}
