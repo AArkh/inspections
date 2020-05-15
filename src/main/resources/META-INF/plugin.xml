@@ -35,6 +35,26 @@
 			level="WARNING"
 			implementationClass="com.plugin.inspection.KotlinThrowsMethodInspection"
 		/>
+
+		<localInspection
+			language="JAVA"
+			displayName="Implement architectural interface (Java)"
+			groupBundle="messages.InspectionsBundle"
+			groupKey="group.names.inheritance.issues"
+			enabledByDefault="true"
+			level="WARNING"
+			implementationClass="com.plugin.inspection.archy.JavaArchyInterfaceInspection"
+		/>
+
+		<localInspection
+			language="kotlin"
+			displayName="Implement architectural interface (Kotlin)"
+			groupBundle="messages.InspectionsBundle"
+			groupKey="group.names.inheritance.issues"
+			enabledByDefault="true"
+			level="WARNING"
+			implementationClass="com.plugin.inspection.archy.KotlinArchyInterfaceInspection"
+		/>
 	</extensions>
 
 	<!-- Compatible with the following versions of IntelliJ Platform -->
