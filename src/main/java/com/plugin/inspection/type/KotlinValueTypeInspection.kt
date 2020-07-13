@@ -52,8 +52,6 @@ class KotlinValueTypeInspection : AbstractKotlinInspection() {
                 val firstChild: PsiElement? = expressionOrInitializer?.firstChild
                 val lastChild: PsiElement? = expressionOrInitializer?.lastChild
 
-                println("exprOrInit = $expressionOrInitializer, ${expressionOrInitializer?.text}, firstCh = $firstChild, lastCh = $lastChild")
-
                 when (expressionOrInitializer) {
                     is KtConstantExpression -> {
                         if (lastChild?.text == "null") {
