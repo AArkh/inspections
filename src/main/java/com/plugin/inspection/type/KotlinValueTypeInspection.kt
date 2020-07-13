@@ -52,6 +52,8 @@ class KotlinValueTypeInspection : AbstractKotlinInspection() {
                 val firstChild: PsiElement? = expressionOrInitializer?.firstChild
                 val lastChild: PsiElement? = expressionOrInitializer?.lastChild
 
+                println("exprOrInit = $expressionOrInitializer, ${expressionOrInitializer?.text}, firstCh = $firstChild, lastCh = $lastChild")
+
                 when (expressionOrInitializer) {
                     is KtConstantExpression -> {
                         if (lastChild?.text == "null") {
@@ -66,7 +68,11 @@ class KotlinValueTypeInspection : AbstractKotlinInspection() {
                         }
                     }
                     is KtReferenceExpression,
-                    is KtLambdaExpression -> {
+                    is KtLambdaExpression,
+                    is KtBinaryExpression,
+                    is KtDoWhileExpression,
+                    is KtIfExpression,
+                    is KtWhenExpression -> {
                         registerProblem(holder, property)
                         return
                     }
