@@ -83,6 +83,12 @@ class KotlinValueTypeInspection : AbstractKotlinInspection() {
                             registerProblem(holder, property)
                             return
                         }
+                        if (lastChild is KtReferenceExpression
+                                && lastChild !is KtCallExpression
+                        ) {
+                            registerProblem(holder, property)
+                            return
+                        }
                     }
                 }
             }
@@ -117,9 +123,8 @@ class KotlinValueTypeInspection : AbstractKotlinInspection() {
                     ?.first()
                     ?.isLowerCase()
                     ?: false
-        } else {
-            false
-        }
+        } else false
+
     }
 }
 
