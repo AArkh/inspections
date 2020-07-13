@@ -106,7 +106,7 @@ class KotlinValueTypeInspection : AbstractKotlinInspection() {
         }
 
         return if (lastChild is KtValueArgumentList) {
-            // Проверка кейсов: methodCall() и ClassConstructor().
+            // Проверка на нижний регистр для понимания, метод это или конструктор.
             preLastChild?.text
                     ?.first()
                     ?.isLowerCase()
