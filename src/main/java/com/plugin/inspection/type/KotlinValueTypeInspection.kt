@@ -41,17 +41,17 @@ class KotlinValueTypeInspection : AbstractKotlinInspection() {
                     return
                 }
 
-                val expressionOrInitializer: KtExpression? = property.delegateExpressionOrInitializer
                 // Делегат (например, "by").
                 val delegateExpression: KtExpression? = property.delegateExpression
-
-                val firstChild: PsiElement? = expressionOrInitializer?.firstChild
-                val lastChild: PsiElement? = expressionOrInitializer?.lastChild
-
                 if (delegateExpression != null) {
                     registerProblem(holder, property)
                     return
                 }
+
+                val expressionOrInitializer: KtExpression? = property.delegateExpressionOrInitializer
+                val firstChild: PsiElement? = expressionOrInitializer?.firstChild
+                val lastChild: PsiElement? = expressionOrInitializer?.lastChild
+
                 when (expressionOrInitializer) {
                     is KtConstantExpression -> {
                         if (lastChild?.text == "null") {
@@ -101,7 +101,9 @@ class KotlinValueTypeInspection : AbstractKotlinInspection() {
         // Разбираем lastChild до деталей.
         while (lastChild is KtCallExpression) {
             val lastChildChildren: Array<PsiElement> = lastChild.children
-            preLastChild = lastChildChildren[lastChildChildren.size - 2]
+            preLastChild = if (lastChildChildren.size > 1) {
+                lastChildChildren[lastChildChildren.lastIndex.dec()]
+            } else null
             lastChild = lastChild.lastChild
         }
 

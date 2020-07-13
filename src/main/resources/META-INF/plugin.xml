@@ -57,13 +57,13 @@
 		/>
 
 		<localInspection
-				language="kotlin"
-				displayName="Set type reference for the property"
-				groupBundle="messages.InspectionsBundle"
-				groupKey="group.names.inheritance.issues"
-				enabledByDefault="true"
-				level="WARNING"
-				implementationClass="com.plugin.inspection.type.KotlinValueTypeInspection"
+			language="kotlin"
+			displayName="Set type reference for the property"
+			groupBundle="messages.InspectionsBundle"
+			groupKey="group.names.inheritance.issues"
+			enabledByDefault="true"
+			level="WARNING"
+			implementationClass="com.plugin.inspection.type.KotlinValueTypeInspection"
 		/>
 	</extensions>
 
