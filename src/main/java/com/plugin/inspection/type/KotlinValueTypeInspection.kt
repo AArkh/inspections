@@ -50,14 +50,7 @@ class KotlinValueTypeInspection : AbstractKotlinInspection() {
                 }
 
                 val expressionOrInitializer: KtExpression? = property.delegateExpressionOrInitializer
-                val firstChild: PsiElement? = expressionOrInitializer?.firstChild
                 val lastChild: PsiElement? = expressionOrInitializer?.lastChild
-
-                println("prop = ${property.name}, " +
-                        "exp = $expressionOrInitializer, ${expressionOrInitializer?.text}, " +
-                        "fCh = $firstChild, ${firstChild?.text}, " +
-                        "lCh = $lastChild, ${lastChild?.text}"
-                )
 
                 when (expressionOrInitializer) {
                     is KtConstantExpression -> {
