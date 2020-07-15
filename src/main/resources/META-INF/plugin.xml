@@ -55,6 +55,16 @@
 			level="WARNING"
 			implementationClass="com.plugin.inspection.archy.KotlinArchyInterfaceInspection"
 		/>
+
+		<localInspection
+			language="kotlin"
+			displayName="Set type reference for the property"
+			groupBundle="messages.InspectionsBundle"
+			groupKey="group.names.inheritance.issues"
+			enabledByDefault="true"
+			level="WARNING"
+			implementationClass="com.plugin.inspection.type.KotlinValueTypeInspection"
+		/>
 	</extensions>
 
 	<!-- Compatible with the following versions of IntelliJ Platform -->
