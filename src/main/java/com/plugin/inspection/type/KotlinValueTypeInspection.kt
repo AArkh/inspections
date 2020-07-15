@@ -15,6 +15,12 @@ import org.jetbrains.kotlin.psi.psiUtil.prevLeaf
 
 private const val DISPLAY_NAME = "The value without type declaration"
 
+/**
+ * Инспекция для определения указания типа у переменной в тех местах, где это происходит неявно.
+ *
+ * В случае отстуствия указания типа подсвечивает соответствующее свойство, предлагая сделать
+ * квик фикс [ValueTypeReferenceQuickFix].
+ */
 class KotlinValueTypeInspection : AbstractKotlinInspection() {
 
     private val valueTypeQuickFix = ValueTypeReferenceQuickFix()
@@ -79,9 +85,7 @@ class KotlinValueTypeInspection : AbstractKotlinInspection() {
                             registerProblem(holder, property)
                             return
                         }
-                        if (lastChild is KtReferenceExpression
-                                && lastChild !is KtCallExpression
-                        ) {
+                        if (lastChild is KtReferenceExpression && lastChild !is KtCallExpression) {
                             registerProblem(holder, property)
                             return
                         }
@@ -125,6 +129,9 @@ class KotlinValueTypeInspection : AbstractKotlinInspection() {
     }
 }
 
+/**
+ * Фикс, проставляющий тип переменной.
+ */
 class ValueTypeReferenceQuickFix : LocalQuickFix {
 
     override fun getName(): String = "Add type reference"
